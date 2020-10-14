@@ -10,6 +10,9 @@
     },
     "dnsLabelPrefix": {
       "value": "GEN-UNIQUE"
+    },
+    "vmName": {
+      "value": "GEN-UNIQUE"
     }
   }
 }

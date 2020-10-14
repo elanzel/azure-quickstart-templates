@@ -22,13 +22,6 @@
         "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
       }
     },
-    "publicIpName": {
-      "type": "string",
-      "defaultValue": "myPublicIP",
-      "metadata": {
-        "description": "Name for the Public IP used to access the Virtual Machine."
-      }
-    },
     "publicIPAllocationMethod": {
       "type": "string",
       "defaultValue": "Dynamic",
@@ -51,7 +44,6 @@
         "description": "SKU for the Public IP used to access the Virtual Machine."
       }
     },
-
     "OSVersion": {
       "type": "string",
       "defaultValue": "2019-Datacenter",
@@ -91,15 +83,17 @@
     },
     "vmName": {
       "type": "string",
-      "defaultValue": "simple-vm",
+      // "defaultValue": "simple-vm", commentato per definire nome macchina durante il deploy
       "metadata": {
         "description": "Name of the virtual machine."
       }
     }
   },
   "variables": {
+    "publicIpName": "[toLower(concat(parameters('vmName'),'-pip'))]", // nome publicIp come richiesto
     "storageAccountName": "[concat('bootdiags', uniquestring(resourceGroup().id))]",
-    "nicName": "myVMNic",
+    //"nicName": "myVMNic",  modificato per calcolare automaticamente il nome che deve essere <vmname>-nic
+    "nicName" : "[toLower(concat(parameters('vmName'),'-nic'))]",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
@@ -122,7 +116,7 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2020-06-01",
-      "name": "[parameters('publicIPName')]",
+      "name": "[variables('publicIPName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('publicIpSku')]"
@@ -190,7 +184,7 @@
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPName'))]",
         "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
       ],
       "properties": {
@@ -200,7 +194,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPName'))]"
               },
               "subnet": {
                 "id": "[variables('subnetRef')]"
@@ -213,7 +207,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2020-06-01",
-      "name": "[parameters('vmName')]",
+      "name": "[parameters('vmName')]", //prende già il valore da fuori
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
@@ -268,7 +262,11 @@
   "outputs": {
     "hostname": {
       "type": "string",
-      "value": "[reference(parameters('publicIPName')).dnsSettings.fqdn]"
+      "value": "[reference(variables('publicIPName')).dnsSettings.fqdn]"
+    },
+    "Osname" : {
+      "type": "string",
+      "value": "[parameters('OsVersion')]"
     }
   }
 }
